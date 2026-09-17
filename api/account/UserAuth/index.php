@@ -2,9 +2,26 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../db.php';
 
-$input = json_decode(file_get_contents('php://input'), true);
-$input = is_array($input) ? $input : $_POST;
-$input = array_merge($_GET, is_array($input) ? $input : []);
+$rawBody = trim((string) file_get_contents('php://input'));
+$input = [];
+if ($rawBody !== '') {
+    $decoded = json_decode($rawBody, true);
+    if (is_array($decoded)) {
+        $input = $decoded;
+    } else {
+        parse_str($rawBody, $parsed);
+        if (is_array($parsed)) {
+            $input = $parsed;
+        }
+    }
+}
+if (!is_array($input) || count($input) === 0) {
+    $input = $_POST;
+}
+if (!is_array($input)) {
+    $input = [];
+}
+$input = array_merge($_GET, $_POST, $_REQUEST, $input);
 $normalized = [];
 foreach ($input as $key => $value) {
     $normalized[strtolower((string) $key)] = $value;
