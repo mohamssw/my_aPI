@@ -4,8 +4,13 @@ require_once __DIR__ . '/../db.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
 $input = is_array($input) ? $input : $_POST;
-$login = trim((string) ($input['username'] ?? $input['userName'] ?? $input['login'] ?? $input['email'] ?? ''));
-$password = (string) ($input['password'] ?? $input['pass'] ?? '');
+$input = array_merge($_GET, is_array($input) ? $input : []);
+$normalized = [];
+foreach ($input as $key => $value) {
+    $normalized[strtolower((string) $key)] = $value;
+}
+$login = trim((string) ($normalized['username'] ?? $normalized['user_name'] ?? $normalized['userid'] ?? $normalized['user_id'] ?? $normalized['user'] ?? $normalized['login'] ?? $normalized['email'] ?? $normalized['mobile'] ?? $normalized['phone'] ?? $normalized['account'] ?? ''));
+$password = (string) ($normalized['password'] ?? $normalized['pass'] ?? $normalized['passwd'] ?? $normalized['pwd'] ?? $normalized['password1'] ?? '');
 
 if ($login === '' || $password === '') {
     http_response_code(400);
@@ -52,7 +57,9 @@ try {
         'tokenType' => 'Bearer',
         'expires_in' => 86400,
         'expiresIn' => 86400,
-        'data' => ['user' => $profile, 'userData' => $profile],
+        'user_id' => (int) $user['id'],
+        'id' => (int) $user['id'],
+        'data' => ['user' => $profile, 'userData' => $profile, 'id' => (int) $user['id'], 'user_id' => (int) $user['id']],
         'user' => $profile,
         'userData' => $profile
     ], JSON_UNESCAPED_SLASHES);
